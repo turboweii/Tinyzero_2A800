@@ -877,6 +877,4 @@ class RayPPOTrainer(object):
                         val_metrics = self._validate()
                         pprint(f'Final validation metrics: {val_metrics}')
                         logger.log(data=val_metrics, step=self.global_steps)
-                    if self.config.trainer.get('save_final', False):
-                        self._save_checkpoint()
                     return
