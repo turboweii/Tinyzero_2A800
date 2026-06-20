@@ -1,3 +1,16 @@
+# Copyright 2024 Bytedance Ltd. and/or its affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """Exact structural difficulty and adaptive sampling utilities for Countdown.
 
 The curriculum deliberately uses only properties that can be proven by an
@@ -15,7 +28,6 @@ from functools import lru_cache
 
 import numpy as np
 from torch.utils.data import Sampler
-
 
 LEVELS = ("L0", "L1", "L2", "L3")
 
@@ -148,16 +160,12 @@ class AdaptiveCurriculumBatchSampler(Sampler):
         self.min_mixed_groups = int(config.get("min_mixed_groups", 16))
 
         self.level_by_index = self._load_or_compute_levels()
-        self.pools = {
-            level: np.flatnonzero(self.level_by_index == level).astype(np.int64).tolist() for level in LEVELS
-        }
+        self.pools = {level: np.flatnonzero(self.level_by_index == level).astype(np.int64).tolist() for level in LEVELS}
         for level, pool in self.pools.items():
             if not pool:
                 raise ValueError(f"Countdown curriculum level {level} is empty")
 
-        self.interval = {
-            level: Counter(total=0, all_wrong=0, mixed=0, all_correct=0) for level in LEVELS
-        }
+        self.interval = {level: Counter(total=0, all_wrong=0, mixed=0, all_correct=0) for level in LEVELS}
         self.last_metrics: dict[str, float] = {}
 
     def _load_or_compute_levels(self) -> np.ndarray:
@@ -174,12 +182,10 @@ class AdaptiveCurriculumBatchSampler(Sampler):
                 levels.append(existing)
                 continue
             ground_truth = row["reward_model"]["ground_truth"]
-            levels.append(
-                classify_countdown_difficulty(
-                    tuple(ground_truth["numbers"]),
-                    int(ground_truth["target"]),
-                )
-            )
+            levels.append(classify_countdown_difficulty(
+                tuple(ground_truth["numbers"]),
+                int(ground_truth["target"]),
+            ))
             if position % 50000 == 0:
                 print(f"Computed Countdown difficulty for {position}/{len(dataframe)} rows")
         dataframe["difficulty"] = levels
@@ -257,9 +263,7 @@ class AdaptiveCurriculumBatchSampler(Sampler):
             metrics["curriculum/updated"] = 0.0
 
         if should_update:
-            self.interval = {
-                level: Counter(total=0, all_wrong=0, mixed=0, all_correct=0) for level in LEVELS
-            }
+            self.interval = {level: Counter(total=0, all_wrong=0, mixed=0, all_correct=0) for level in LEVELS}
         for level in LEVELS:
             metrics[f"curriculum/{level}_weight"] = self.weights[level]
         self.last_metrics = metrics

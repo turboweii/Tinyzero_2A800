@@ -1,3 +1,17 @@
+# Copyright 2024 Bytedance Ltd. and/or its affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import math
 
 import pandas as pd
@@ -69,16 +83,20 @@ def test_clip_higher_uses_asymmetric_upper_bound():
 
 
 def test_adaptive_curriculum_moves_toward_mixed_groups():
+
     class Dataset:
-        dataframe = pd.DataFrame(
-            {"difficulty": ["L0"] * 100 + ["L1"] * 100 + ["L2"] * 100 + ["L3"] * 100}
-        )
+        dataframe = pd.DataFrame({"difficulty": ["L0"] * 100 + ["L1"] * 100 + ["L2"] * 100 + ["L3"] * 100})
 
         def __len__(self):
             return len(self.dataframe)
 
     config = {
-        "initial_weights": {"L0": 0.45, "L1": 0.30, "L2": 0.20, "L3": 0.05},
+        "initial_weights": {
+            "L0": 0.45,
+            "L1": 0.30,
+            "L2": 0.20,
+            "L3": 0.05
+        },
         "warmup_steps": 40,
         "update_every": 20,
         "min_mixed_groups": 4,

@@ -22,9 +22,9 @@ from datasets import Dataset
 from verl.utils.hdfs_io import copy, makedirs
 import argparse
 
-
 from random import randint, seed
 from tqdm import tqdm
+
 
 def gen_dataset(
     N,
@@ -37,19 +37,20 @@ def gen_dataset(
     for _ in tqdm(range(N)):
         # Helper function to generate a number with 50% chance of being N-digit or N/2-digit
         def get_random_num():
-            r = randint(,3)
+            r = randint(0, 3)
             if r == 0:
                 # 2 digits less than original
-                max_num = 10**(DIGIT-2)
-                return randint(0 if LESS_OR_EQUAL else max_num//10, max_num-1)
+                max_num = 10**(DIGIT - 2)
+                return randint(0 if LESS_OR_EQUAL else max_num // 10, max_num - 1)
             elif r == 1:
                 # 1 digit less than original
-                max_num = 10**(DIGIT-1)
-                return randint(0 if LESS_OR_EQUAL else max_num//10, max_num-1)
+                max_num = 10**(DIGIT - 1)
+                return randint(0 if LESS_OR_EQUAL else max_num // 10, max_num - 1)
             else:
                 # N-digit number
                 max_num = 10**DIGIT
-                return randint(0 if LESS_OR_EQUAL else max_num//10, max_num-1)
+                return randint(0 if LESS_OR_EQUAL else max_num // 10, max_num - 1)
+
         # Generate two numbers independently
         num1 = get_random_num()
         num2 = get_random_num()
@@ -57,8 +58,8 @@ def gen_dataset(
         result = num1 * num2
         equations.append((num1, num2, result))
     return equations
-    
-    
+
+
 def extract_solution(solution_str, *args):
     solution = re.search("#### (\\-?[0-9\\.\\,]+)", solution_str)
     assert solution is not None
@@ -66,11 +67,13 @@ def extract_solution(solution_str, *args):
     final_solution = final_solution.split('#### ')[1].replace(',', '')
     return final_solution
 
+
 def make_prefix(dp):
     num1 = dp['num1']
     num2 = dp['num2']
     prefix = f"""A conversation between User and Assistant. The user asks a question, and the Assistant solves it. The assistant first thinks about the reasoning process in the mind and then provides the user with the answer. The reasoning process and answer are enclosed within <think> </think> and <answer> </answer> tags, respectively, i.e., <think> reasoning process here </think> <answer> RESULT_NUMBER </answer>. User: Give me the answer of the following equation: {num1} * {num2} = Assistant: Ok let me think about it.\n<think>"""
     return prefix
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -92,7 +95,6 @@ if __name__ == '__main__':
     assert len(dataset) > TRAIN_SIZE + TEST_SIZE
     train_dataset = dataset[:TRAIN_SIZE]
     test_dataset = dataset[-TEST_SIZE:]
-
 
     # add a row to each data item that represents a unique id
     def make_map_fn(split):
@@ -119,7 +121,7 @@ if __name__ == '__main__':
             return data
 
         return process_fn
-    
+
     def to_dataset(dataset_list):
         dataset_dict = {
             "num1": [],

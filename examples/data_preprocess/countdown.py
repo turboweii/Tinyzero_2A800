@@ -1,3 +1,16 @@
+# Copyright 2024 Bytedance Ltd. and/or its affiliates
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """
 Preprocess dataset for countdown task - given a target number and N numbers, generate equations to reach target
 """
@@ -38,18 +51,18 @@ def gen_dataset(
     """
     seed(seed_value)
     samples = []
-    
+
     for _ in tqdm(range(num_samples)):
         # Generate random target
         target = randint(1, max_target)
-        
+
         # Generate random numbers
         numbers = [randint(min_number, max_number) for _ in range(num_operands)]
-        
-        
+
         samples.append((target, numbers))
-    
+
     return samples
+
 
 def make_prefix(dp, template_type):
     target = dp['target']
@@ -93,13 +106,11 @@ if __name__ == '__main__':
     test_dataset = raw_dataset.select(range(TRAIN_SIZE, TRAIN_SIZE + TEST_SIZE))
 
     def make_map_fn(split):
+
         def process_fn(example, idx):
             question = make_prefix(example, template_type=args.template_type)
             difficulty = classify_countdown_difficulty(tuple(example['nums']), int(example['target']))
-            solution = {
-                "target": example['target'],
-                "numbers": example['nums']
-            }
+            solution = {"target": example['target'], "numbers": example['nums']}
             data = {
                 "data_source": data_source,
                 "prompt": [{
@@ -119,8 +130,9 @@ if __name__ == '__main__':
                 }
             }
             return data
+
         return process_fn
-    
+
     train_dataset = train_dataset.map(function=make_map_fn('train'), with_indices=True)
     test_dataset = test_dataset.map(function=make_map_fn('test'), with_indices=True)
 
@@ -132,4 +144,4 @@ if __name__ == '__main__':
 
     if hdfs_dir is not None:
         makedirs(hdfs_dir)
-        copy(src=local_dir, dst=hdfs_dir) 
+        copy(src=local_dir, dst=hdfs_dir)

@@ -575,7 +575,9 @@ class RayPPOTrainer(object):
         index_array = np.asarray(indices, dtype=np.int64)
         return DataProto(
             batch=data.batch[index_tensor],
-            non_tensor_batch={key: value[index_array] for key, value in data.non_tensor_batch.items()},
+            non_tensor_batch={
+                key: value[index_array] for key, value in data.non_tensor_batch.items()
+            },
             meta_info=data.meta_info,
         )
 
@@ -613,8 +615,7 @@ class RayPPOTrainer(object):
         )
         for key in ('answer_exists', 'syntax_valid', 'numbers_valid', 'overlong_penalty'):
             batch.non_tensor_batch[key] = np.asarray(
-                [details.get(key, False if key != 'overlong_penalty' else 0.0)
-                 for details in reward_result['details']],
+                [details.get(key, False if key != 'overlong_penalty' else 0.0) for details in reward_result['details']],
                 dtype=object,
             )
         return batch
@@ -673,10 +674,7 @@ class RayPPOTrainer(object):
         generated_groups = len(initial_records)
         while generated_groups < max_groups:
             accepted = effective_counts()
-            missing = {
-                level: max(0, target_quota[level] - accepted[level])
-                for level in target_quota
-            }
+            missing = {level: max(0, target_quota[level] - accepted[level]) for level in target_quota}
             missing_total = sum(missing.values())
             if missing_total == 0:
                 break
@@ -715,38 +713,29 @@ class RayPPOTrainer(object):
 
         selected_records.extend(fallback_records)
         if len(selected_records) != target_groups:
-            raise RuntimeError(
-                f"Dynamic sampling selected {len(selected_records)} groups, expected {target_groups}"
-            )
-        selected_indices = [
-            index
-            for record in selected_records
-            for index in record["indices"]
-        ]
+            raise RuntimeError(f"Dynamic sampling selected {len(selected_records)} groups, expected {target_groups}")
+        selected_indices = [index for record in selected_records for index in record["indices"]]
         selected = self._index_dataproto(all_candidates, selected_indices)
 
         metrics = {
-            "dynamic_sampling/candidate_groups": float(len(all_records)),
-            "dynamic_sampling/effective_groups": float(sum(record["effective"] for record in all_records)),
-            "dynamic_sampling/effective_rate": float(
-                sum(record["effective"] for record in all_records) / max(1, len(all_records))
-            ),
-            "dynamic_sampling/fallback_groups": float(len(fallback_records)),
-            "reward/answer_exists_rate": float(
-                np.mean(all_candidates.non_tensor_batch['answer_exists'].astype(float))
-            ),
-            "reward/syntax_valid_rate": float(
-                np.mean(all_candidates.non_tensor_batch['syntax_valid'].astype(float))
-            ),
-            "reward/numbers_valid_rate": float(
-                np.mean(all_candidates.non_tensor_batch['numbers_valid'].astype(float))
-            ),
-            "reward/exact_correct_rate": float(
-                np.mean(all_candidates.non_tensor_batch['exact_correct'].astype(float))
-            ),
-            "reward/overlong_penalty_mean": float(
-                np.mean(all_candidates.non_tensor_batch['overlong_penalty'].astype(float))
-            ),
+            "dynamic_sampling/candidate_groups":
+                float(len(all_records)),
+            "dynamic_sampling/effective_groups":
+                float(sum(record["effective"] for record in all_records)),
+            "dynamic_sampling/effective_rate":
+                float(sum(record["effective"] for record in all_records) / max(1, len(all_records))),
+            "dynamic_sampling/fallback_groups":
+                float(len(fallback_records)),
+            "reward/answer_exists_rate":
+                float(np.mean(all_candidates.non_tensor_batch['answer_exists'].astype(float))),
+            "reward/syntax_valid_rate":
+                float(np.mean(all_candidates.non_tensor_batch['syntax_valid'].astype(float))),
+            "reward/numbers_valid_rate":
+                float(np.mean(all_candidates.non_tensor_batch['numbers_valid'].astype(float))),
+            "reward/exact_correct_rate":
+                float(np.mean(all_candidates.non_tensor_batch['exact_correct'].astype(float))),
+            "reward/overlong_penalty_mean":
+                float(np.mean(all_candidates.non_tensor_batch['overlong_penalty'].astype(float))),
         }
         for record in all_records:
             self.curriculum_sampler.record_group(
